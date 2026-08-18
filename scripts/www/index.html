@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>三国杀百科</title>
+<style>
+  :root {
+    --bg: #14161c;
+    --bg2: #1d2029;
+    --panel: #232733;
+    --panel2: #2b3040;
+    --line: #343a4c;
+    --text: #eef0f6;
+    --muted: #9aa1b5;
+    --accent: #e0533f;
+    --gold: #d9a441;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; height: 100%; }
+  body {
+    background: radial-gradient(1200px 800px at 50% -10%, #242a3d 0%, var(--bg) 55%);
+    color: var(--text);
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    display: flex;
+    flex-direction: column;
+  }
+  button { font-family: inherit; cursor: pointer; }
+  input, select, textarea {
+    font-family: inherit; font-size: 15px; color: var(--text);
+    background: var(--bg2); border: 1px solid var(--line); border-radius: 10px;
+    padding: 9px 11px; outline: none; width: 100%;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+  textarea { resize: vertical; min-height: 90px; }
+  select { appearance: none; }
+
+  .app-header {
+    position: sticky; top: 0; z-index: 30;
+    background: linear-gradient(135deg, #1c2030 0%, #23202e 100%);
+    border-bottom: 1px solid var(--line);
+    padding: 10px 12px 10px;
+  }
+  .title-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .title-row h1 {
+    margin: 0; font-size: 20px; letter-spacing: 1px;
+    background: linear-gradient(90deg, #ffd36e, #ff8a5c);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .header-actions { display: flex; gap: 8px; }
+  .btn {
+    background: var(--panel2); color: var(--text); border: 1px solid var(--line);
+    border-radius: 10px; padding: 8px 12px; font-size: 14px;
+    transition: transform .08s ease, filter .15s ease;
+  }
+  .btn:active { transform: scale(.97); filter: brightness(1.08); }
+  .btn-primary { background: linear-gradient(135deg, #e0533f, #c03b2a); border: none; color: #fff; font-weight: 600; box-shadow: 0 4px 14px rgba(224,83,63,.35); }
+  .btn-gold { background: linear-gradient(135deg, #f2a23c, #d98b22); border: none; color: #2a1c05; font-weight: 600; box-shadow: 0 4px 14px rgba(242,162,60,.3); }
+  .btn-ghost { background: transparent; }
+  .btn-sm { padding: 6px 9px; font-size: 13px; border-radius: 8px; }
+  .search-row { margin-top: 10px; }
+  .search-row input { padding-left: 34px; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="%239aa1b5" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>'); background-repeat: no-repeat; background-position: 10px center; }
+  .filter-row { display: flex; gap: 8px; margin-top: 8px; }
+  .filter-row select { flex: 1; }
+
+  .folder-bar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 12px; border-bottom: 1px solid var(--line);
+    background: var(--bg2); overflow: hidden;
+  }
+  .folder-chips { display: flex; gap: 8px; overflow-x: auto; flex: 1; scrollbar-width: none; }
+  .folder-chips::-webkit-scrollbar { display: none; }
+  .chip {
+    flex: 0 0 auto; padding: 7px 14px; border-radius: 999px; font-size: 14px;
+    background: var(--panel); border: 1px solid var(--line); color: var(--muted);
+    white-space: nowrap; transition: all .15s ease;
+  }
+  .chip:active { transform: scale(.96); }
+  .chip.active { background: linear-gradient(135deg, #e0533f, #c03b2a); color: #fff; border-color: transparent; font-weight: 600; box-shadow: 0 3px 10px rgba(224,83,63,.35); }
+  .chip .count { opacity: .7; font-size: 12px; margin-left: 4px; }
+  .folder-manage-btn { flex: 0 0 auto; }
+
+  .grid {
+    flex: 1; overflow-y: auto; padding: 14px 12px 90px;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(152px, 1fr)); gap: 14px;
+    align-content: start;
+  }
+  .card {
+    background: linear-gradient(180deg, #262b3a 0%, var(--panel) 45%);
+    border: 1px solid var(--line); border-radius: var(--radius);
+    overflow: hidden; cursor: pointer; position: relative;
+    transition: transform .1s ease, box-shadow .15s ease;
+    box-shadow: 0 3px 10px rgba(0,0,0,.25);
+  }
+  .card:active { transform: scale(.97); }
+  .card-img { width: 100%; aspect-ratio: 3/4; background: var(--panel2); overflow: hidden; }
+  .card-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .card-img .noimg { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 13px; }
+  .card-body { padding: 8px 10px 10px; }
+  .card-name { font-weight: 700; font-size: 15px; margin-bottom: 6px; letter-spacing: .5px; }
+  .card-meta { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+  .faction-badge {
+    font-size: 11px; padding: 1px 7px; border-radius: 999px; color: #fff; font-weight: 600;
+  }
+  .faction-魏 { background: #3b6cc0; }
+  .faction-蜀 { background: #c0392b; }
+  .faction-吴 { background: #2e9e5b; }
+  .faction-群 { background: #6f7687; }
+  .faction-神 { background: #b8860b; }
+  .faction-晋 { background: #8e44ad; }
+  .card-series { font-size: 11px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .empty-state {
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 12px; color: var(--muted); padding: 20px; text-align: center;
+  }
+  .empty-state .big-emoji { font-size: 52px; }
+
+  .fab {
+    position: fixed; right: 18px; bottom: 24px; z-index: 25;
+    width: 58px; height: 58px; border-radius: 50%; border: none;
+    background: linear-gradient(135deg, #e0533f, #c03b2a); color: #fff;
+    font-size: 30px; line-height: 1; box-shadow: 0 6px 20px rgba(224,83,63,.45);
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .modal {
+    position: fixed; inset: 0; z-index: 60; display: none;
+    align-items: flex-end; justify-content: center;
+    background: rgba(0,0,0,.55);
+  }
+  .modal.show { display: flex; }
+  .modal-card {
+    background: var(--bg2); width: 100%; max-width: 640px; max-height: 94vh;
+    border-radius: 20px 20px 0 0; overflow: hidden; display: flex; flex-direction: column;
+    animation: slideUp .2s ease; box-shadow: 0 -8px 40px rgba(0,0,0,.5);
+  }
+  @keyframes slideUp { from { transform: translateY(40px); opacity: .4; } to { transform: none; opacity: 1; } }
+  .modal-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 16px; border-bottom: 1px solid var(--line); flex: 0 0 auto;
+  }
+  .modal-head h2 { margin: 0; font-size: 18px; }
+  .modal-head .x { background: none; border: none; color: var(--muted); font-size: 26px; line-height: 1; }
+  .modal-body { padding: 16px; overflow-y: auto; flex: 1; }
+  .modal-foot { padding: 12px 16px; border-top: 1px solid var(--line); display: flex; gap: 10px; flex: 0 0 auto; }
+  .modal-foot .btn { flex: 1; }
+
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+  .row2 { display: flex; gap: 10px; }
+  .row2 .field { flex: 1; }
+
+  .cover-box { display: flex; gap: 14px; align-items: flex-start; }
+  .cover-preview {
+    width: 110px; aspect-ratio: 3/4; border-radius: 10px; overflow: hidden;
+    background: var(--panel2); border: 1px solid var(--line); flex: 0 0 auto;
+    display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 12px;
+  }
+  .cover-preview img { width: 100%; height: 100%; object-fit: cover; }
+  .cover-actions { display: flex; flex-direction: column; gap: 8px; }
+
+  .section-title {
+    font-size: 14px; font-weight: 700; color: var(--gold); margin: 18px 0 10px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding-left: 9px; border-left: 3px solid var(--accent);
+  }
+
+  .skin-item {
+    display: flex; align-items: center; gap: 12px; background: var(--panel);
+    border: 1px solid var(--line); border-radius: 12px; padding: 10px; margin-bottom: 10px;
+  }
+  .skin-thumb { width: 60px; height: 80px; border-radius: 8px; overflow: hidden; flex: 0 0 auto; background: var(--panel2); }
+  .skin-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .skin-mid { flex: 1; min-width: 0; }
+  .skin-mid input { padding: 6px 8px; font-size: 14px; }
+  .skin-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .skin-btns .btn { padding: 4px 8px; font-size: 12px; border-radius: 7px; }
+
+  .gallery { position: relative; }
+  .gallery-main {
+    width: 100%; max-height: 56vh; background: #000; display: flex; align-items: center; justify-content: center;
+    overflow: hidden; position: relative; border-radius: 12px;
+  }
+  .gallery-main img { max-width: 100%; max-height: 56vh; object-fit: contain; display: block; }
+  .gallery-main .noimg { color: #666; font-size: 14px; padding: 40px 0; }
+  .gallery-nav {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    background: rgba(0,0,0,.45); color: #fff; border: none; width: 40px; height: 56px;
+    font-size: 24px; border-radius: 10px;
+  }
+  .gallery-nav.prev { left: 8px; }
+  .gallery-nav.next { right: 8px; }
+  .gallery-caption { text-align: center; color: var(--muted); font-size: 13px; padding: 8px 0 2px; }
+  .thumb-strip { display: flex; gap: 8px; overflow-x: auto; padding: 8px 0; scrollbar-width: none; }
+  .thumb-strip::-webkit-scrollbar { display: none; }
+  .thumb-strip .t {
+    width: 52px; height: 68px; border-radius: 8px; overflow: hidden; flex: 0 0 auto;
+    border: 2px solid var(--line); cursor: pointer; background: var(--panel2);
+  }
+  .thumb-strip .t img { width: 100%; height: 100%; object-fit: cover; }
+  .thumb-strip .t.active { border-color: var(--accent); }
+  .view-name { text-align: center; font-size: 20px; font-weight: 700; margin: 6px 0 14px; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .info-item { background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 10px; padding: 10px 12px; }
+  .info-item .k { font-size: 12px; color: var(--muted); }
+  .info-item .v { font-size: 15px; font-weight: 600; margin-top: 2px; }
+  .skill-block { background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--gold); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
+  .skill-block .sk-name { font-weight: 600; color: var(--gold); }
+  .skill-block .sk-desc { color: var(--muted); font-size: 14px; margin-top: 3px; white-space: pre-wrap; }
+
+  .folder-item { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
+  .folder-item input { flex: 1; }
+  .folder-new { display: flex; gap: 8px; margin-bottom: 14px; }
+  .folder-new input { flex: 1; }
+
+  .hint { color: var(--muted); font-size: 13px; text-align: center; padding: 14px 0; }
+  .confirm-text { font-size: 15px; padding: 6px 2px 4px; }
+
+  #toast {
+    position: fixed; left: 50%; bottom: 90px; transform: translateX(-50%) translateY(20px);
+    background: rgba(20,22,28,.95); color: #fff; padding: 10px 18px; border-radius: 999px;
+    font-size: 14px; border: 1px solid var(--line); opacity: 0; pointer-events: none;
+    transition: opacity .2s, transform .2s; z-index: 100; max-width: 86vw; text-align: center;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  @media (min-width: 700px) {
+    .modal { align-items: center; }
+    .modal-card { border-radius: 20px; }
+  }
+</style>
+</head>
+<body>
+  <header class="app-header">
+    <div class="title-row">
+      <h1>三国杀百科</h1>
+      <div class="header-actions">
+        <button class="btn btn-sm" onclick="exportData()">导出</button>
+        <button class="btn btn-sm" onclick="document.getElementById('importFile').click()">导入</button>
+      </div>
+    </div>
+    <div class="search-row">
+      <input id="searchInput" type="search" placeholder="搜索武将名字 / 技能 / 编号 / 系列" oninput="onSearch(this.value)">
+    </div>
+    <div class="filter-row">
+      <select id="seriesFilter" onchange="onSeriesFilter(this.value)">
+        <option value="">全部系列</option>
+      </select>
+    </div>
+  </header>
+
+  <nav class="folder-bar">
+    <div class="folder-chips" id="folderChips"></div>
+    <button class="btn btn-sm btn-ghost folder-manage-btn" onclick="openFolderManager()" title="管理文件夹">☰</button>
+  </nav>
+
+  <main class="grid" id="grid"></main>
+
+  <div class="empty-state" id="emptyState" style="display:none;">
+    <div class="big-emoji">🗡️</div>
+    <div>还没有武将，点击下方按钮添加第一个武将</div>
+    <button class="btn btn-primary" onclick="openEditGeneral(null)">＋ 新建武将</button>
+  </div>
+
+  <button class="fab" onclick="openEditGeneral(null)">＋</button>
+
+  <input type="file" id="importFile" accept=".json,.zip,application/json,application/zip" style="display:none" onchange="importData(this)">
+
+  <div class="modal" id="modalEdit">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h2 id="editTitle">新建武将</h2>
+        <button class="x" onclick="closeEditGeneral()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <label>武将名字 *</label>
+          <input id="fName" placeholder="例如：诸葛亮" oninput="previewEditTitle()">
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label>势力</label>
+            <input id="fFaction" list="factionList" placeholder="魏 / 蜀 / 吴 / 群 / 神">
+            <datalist id="factionList">
+              <option value="魏"><option value="蜀"><option value="吴">
+              <option value="群"><option value="神"><option value="晋">
+            </datalist>
+          </div>
+          <div class="field">
+            <label>武将编号</label>
+            <input id="fNumber" placeholder="例如：SHU 001">
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label>勾玉（可选）</label>
+            <input id="fJade" type="number" min="0" max="20" placeholder="例如：3">
+          </div>
+          <div class="field">
+            <label>武将系列</label>
+            <input id="fSeries" list="seriesList" placeholder="例如：标准版 / SP">
+            <datalist id="seriesList">
+              <option value="标准版"><option value="风"><option value="火"><option value="林"><option value="山">
+              <option value="界限突破"><option value="神话再临"><option value="一将成名"><option value="SP"><option value="国战">
+            </datalist>
+          </div>
+        </div>
+        <div class="field">
+          <label>所属文件夹</label>
+          <select id="fFolder"><option value="">未分类</option></select>
+        </div>
+        <div class="field">
+          <label>技能（可选，每行一个，格式：技能名：描述）</label>
+          <textarea id="fSkills" placeholder="仁德：出牌阶段，你可以将任意数量的手牌交给其他角色。&#10;空城：锁定技，你没有手牌时，不能成为【杀】或【决斗】的目标。"></textarea>
+        </div>
+
+        <div class="section-title">主图（封面）</div>
+        <div class="cover-box">
+          <div class="cover-preview" id="coverPreview">暂无图片</div>
+          <div class="cover-actions">
+            <button class="btn btn-sm" onclick="document.getElementById('coverFile').click()">上传主图</button>
+            <button class="btn btn-sm" id="removeCoverBtn" onclick="removeCover()" style="display:none">移除主图</button>
+            <div class="hint" style="text-align:left;padding:0">主图将显示在列表卡片上</div>
+          </div>
+        </div>
+        <input type="file" id="coverFile" accept="image/*" style="display:none" onchange="handleCoverUpload(this)">
+
+        <div class="section-title">
+          <span>皮肤图片</span>
+          <button class="btn btn-sm btn-gold" onclick="document.getElementById('skinFile').click()">＋ 添加皮肤</button>
+        </div>
+        <input type="file" id="skinFile" accept="image/*" multiple style="display:none" onchange="addSkinFiles(this)">
+        <div id="skinList"></div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn" onclick="closeEditGeneral()">取消</button>
+        <button class="btn btn-primary" onclick="saveGeneralForm()">保存武将</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="modalView">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h2>武将详情</h2>
+        <button class="x" onclick="closeView()">×</button>
+      </div>
+      <div class="modal-body" id="viewBody"></div>
+      <div class="modal-foot">
+        <button class="btn" onclick="downloadCurrentImage()">下载当前图片</button>
+        <button class="btn btn-primary" onclick="editFromView()">编辑武将</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="modalFolder">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h2>文件夹管理</h2>
+        <button class="x" onclick="hideModal('modalFolder')">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="folder-new">
+          <input id="newFolderName" placeholder="新文件夹名称">
+          <button class="btn btn-primary btn-sm" onclick="addFolder()">新建</button>
+        </div>
+        <div id="folderList"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="modalConfirm">
+    <div class="modal-card" style="max-width: 400px;">
+      <div class="modal-head">
+        <h2>确认</h2>
+        <button class="x" onclick="confirmCancel()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="confirm-text" id="confirmMsg"></div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn" onclick="confirmCancel()">取消</button>
+        <button class="btn btn-primary" onclick="confirmOk()">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+<script>
+const DB_NAME = 'sgswiki_db';
+const DB_VERSION = 1;
+let db = null;
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = (e) => {
+      const d = e.target.result;
+      if (!d.objectStoreNames.contains('folders')) d.createObjectStore('folders', { keyPath: 'id' });
+      if (!d.objectStoreNames.contains('generals')) d.createObjectStore('generals', { keyPath: 'id' });
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+function dbGetAll(store) {
+  return new Promise((resolve, reject) => {
+    const req = db.transaction(store, 'readonly').objectStore(store).getAll();
+    req.onsuccess = () => resolve(req.result || []);
+    req.onerror = () => reject(req.error);
+  });
+}
+function dbPut(store, item) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, 'readwrite');
+    tx.objectStore(store).put(item);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+function dbDelete(store, id) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, 'readwrite');
+    tx.objectStore(store).delete(id);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+function dbClear(store) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, 'readwrite');
+    tx.objectStore(store).clear();
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+let folders = [];
+let generals = [];
+let currentFolderId = null;
+let searchQuery = '';
+let seriesFilter = '';
+
+let editingDraft = null;
+let currentViewId = null;
+let galleryImages = [];
+let galleryIndex = 0;
+let confirmCallback = null;
+let toastTimer = null;
+
+function uid() { return 'id_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8); }
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+function jadeDisplay(n) {
+  if (n == null || n === '') return '—';
+  const c = Math.max(0, Math.min(20, parseInt(n) || 0));
+  return c === 0 ? '0' : '●'.repeat(c);
+}
+function factionClass(f) {
+  const known = ['魏', '蜀', '吴', '群', '神', '晋'];
+  return known.includes(f) ? 'faction-' + f : '';
+}
+function getCover(g) {
+  if (g.coverImage) return g.coverImage;
+  if (g.skins && g.skins.length) return g.skins[0].image;
+  return '';
+}
+function extFromDataUrl(d) {
+  const m = (d.match(/^data:(image\/[a-z+]+);/) || [])[1];
+  const map = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp', 'image/gif': 'gif' };
+  return map[m] || 'jpg';
+}
+function downloadDataUrl(dataUrl, filename) {
+  const a = document.createElement('a');
+  a.href = dataUrl;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  toast('已开始下载：' + filename);
+}
+
+/* ---------- ZIP 打包 / 解析（STORE 不压缩） ---------- */
+const CRC_TABLE = (() => {
+  const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+    t[n] = c >>> 0;
+  }
+  return t;
+})();
+function crc32(bytes) {
+  let c = 0xFFFFFFFF;
+  for (let i = 0; i < bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
+  return (c ^ 0xFFFFFFFF) >>> 0;
+}
+function dataUrlToBytes(dataUrl) {
+  const b64 = dataUrl.split(',')[1];
+  const bin = atob(b64);
+  const arr = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return arr;
+}
+function sanitizeFilename(s) {
+  let r = String(s == null ? '' : s).replace(/[\\/:*?"<>|\r\n\t]+/g, '_').trim();
+  r = r.replace(/\.+$/, '');
+  return r || '未命名';
+}
+function buildZip(files) {
+  const enc = new TextEncoder();
+  const locals = [];
+  const centrals = [];
+  let offset = 0;
+  const DOS_DATE = 0x21;
+  for (const f of files) {
+    const nameBytes = enc.encode(f.name);
+    const data = f.data;
+    const crc = crc32(data);
+    const size = data.length;
+
+    const lh = new DataView(new ArrayBuffer(30));
+    lh.setUint32(0, 0x04034b50, true);
+    lh.setUint16(4, 20, true);
+    lh.setUint16(6, 0x0800, true);
+    lh.setUint16(8, 0, true);
+    lh.setUint16(10, 0, true);
+    lh.setUint16(12, DOS_DATE, true);
+    lh.setUint32(14, crc, true);
+    lh.setUint32(18, size, true);
+    lh.setUint32(22, size, true);
+    lh.setUint16(26, nameBytes.length, true);
+    lh.setUint16(28, 0, true);
+    locals.push(new Uint8Array(lh.buffer), nameBytes, data);
+
+    const ch = new DataView(new ArrayBuffer(46));
+    ch.setUint32(0, 0x02014b50, true);
+    ch.setUint16(4, 20, true);
+    ch.setUint16(6, 20, true);
+    ch.setUint16(8, 0x0800, true);
+    ch.setUint16(10, 0, true);
+    ch.setUint16(12, 0, true);
+    ch.setUint16(14, DOS_DATE, true);
+    ch.setUint32(16, crc, true);
+    ch.setUint32(20, size, true);
+    ch.setUint32(24, size, true);
+    ch.setUint16(28, nameBytes.length, true);
+    ch.setUint16(30, 0, true);
+    ch.setUint16(32, 0, true);
+    ch.setUint16(34, 0, true);
+    ch.setUint16(36, 0, true);
+    ch.setUint32(38, 0, true);
+    ch.setUint32(42, offset, true);
+    centrals.push(new Uint8Array(ch.buffer), nameBytes);
+
+    offset += 30 + nameBytes.length + size;
+  }
+  let centralSize = 0;
+  for (const p of centrals) centralSize += p.length;
+  const total = offset + centralSize + 22;
+  const out = new Uint8Array(total);
+  let pos = 0;
+  for (const p of locals) { out.set(p, pos); pos += p.length; }
+  for (const p of centrals) { out.set(p, pos); pos += p.length; }
+  const eocd = new DataView(new ArrayBuffer(22));
+  eocd.setUint32(0, 0x06054b50, true);
+  eocd.setUint16(4, 0, true);
+  eocd.setUint16(6, 0, true);
+  eocd.setUint16(8, files.length, true);
+  eocd.setUint16(10, files.length, true);
+  eocd.setUint32(12, centralSize, true);
+  eocd.setUint32(16, offset, true);
+  eocd.setUint16(20, 0, true);
+  out.set(new Uint8Array(eocd.buffer), pos);
+  return out;
+}
+function parseZip(bytes) {
+  const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  let eocd = -1;
+  for (let i = bytes.length - 22; i >= 0 && i >= bytes.length - 65557; i--) {
+    if (bytes[i] === 0x50 && bytes[i + 1] === 0x4b && bytes[i + 2] === 0x05 && bytes[i + 3] === 0x06) { eocd = i; break; }
+  }
+  if (eocd < 0) throw new Error('不是有效的 ZIP 文件');
+  const count = dv.getUint16(eocd + 10, true);
+  let cdOffset = dv.getUint32(eocd + 16, true);
+  const enc = new TextDecoder();
+  const files = {};
+  for (let i = 0; i < count; i++) {
+    if (bytes[cdOffset] !== 0x50 || bytes[cdOffset + 1] !== 0x4b || bytes[cdOffset + 2] !== 0x01 || bytes[cdOffset + 3] !== 0x02) throw new Error('ZIP 目录解析失败');
+    const method = dv.getUint16(cdOffset + 10, true);
+    const compSize = dv.getUint32(cdOffset + 20, true);
+    const nameLen = dv.getUint16(cdOffset + 28, true);
+    const extraLen = dv.getUint16(cdOffset + 30, true);
+    const commentLen = dv.getUint16(cdOffset + 32, true);
+    const localOffset = dv.getUint32(cdOffset + 42, true);
+    const name = enc.decode(bytes.subarray(cdOffset + 46, cdOffset + 46 + nameLen));
+    const lNameLen = dv.getUint16(localOffset + 26, true);
+    const lExtraLen = dv.getUint16(localOffset + 28, true);
+    const dataStart = localOffset + 30 + lNameLen + lExtraLen;
+    if (method !== 0) throw new Error('仅支持本应用导出的 ZIP（请勿手动重新压缩）');
+    files[name] = bytes.slice(dataStart, dataStart + compSize);
+    cdOffset += 46 + nameLen + extraLen + commentLen;
+  }
+  return files;
+}
+
+function processImage(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => resolve(e.target.result);
+    reader.onerror = () => reject(new Error('读取失败'));
+    reader.readAsDataURL(file);
+  });
+}
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2000);
+}
+function showModal(id) { document.getElementById(id).classList.add('show'); }
+function hideModal(id) { document.getElementById(id).classList.remove('show'); }
+function confirmDialog(msg, cb) {
+  document.getElementById('confirmMsg').textContent = msg;
+  confirmCallback = cb;
+  showModal('modalConfirm');
+}
+async function confirmOk() {
+  const cb = confirmCallback;
+  confirmCallback = null;
+  hideModal('modalConfirm');
+  if (cb) { try { await cb(); } catch (e) { toast('操作失败'); } }
+}
+function confirmCancel() { confirmCallback = null; hideModal('modalConfirm'); }
+
+async function loadData() {
+  folders = await dbGetAll('folders');
+  generals = await dbGetAll('generals');
+}
+async function persistFolders() { for (const f of folders) await dbPut('folders', f); }
+async function persistGenerals() { for (const g of generals) await dbPut('generals', g); }
+
+function renderAll() {
+  renderFolderChips();
+  renderSeriesFilter();
+  renderGrid();
+}
+
+function renderFolderChips() {
+  const wrap = document.getElementById('folderChips');
+  let html = `<div class="chip ${currentFolderId === null ? 'active' : ''}" onclick="selectFolder(null)">全部<span class="count">${generals.length}</span></div>`;
+  for (const f of folders) {
+    const cnt = generals.filter(g => g.folderId === f.id).length;
+    html += `<div class="chip ${currentFolderId === f.id ? 'active' : ''}" onclick="selectFolder('${f.id}')">${escapeHtml(f.name)}<span class="count">${cnt}</span></div>`;
+  }
+  wrap.innerHTML = html;
+}
+
+function renderSeriesFilter() {
+  const sel = document.getElementById('seriesFilter');
+  const seriesSet = new Set();
+  for (const g of generals) if (g.series && g.series.trim()) seriesSet.add(g.series.trim());
+  const current = seriesFilter;
+  let html = '<option value="">全部系列</option>';
+  for (const s of Array.from(seriesSet).sort((a, b) => a.localeCompare(b, 'zh'))) {
+    html += `<option value="${escapeHtml(s)}" ${s === current ? 'selected' : ''}>${escapeHtml(s)}</option>`;
+  }
+  sel.innerHTML = html;
+  if (current && !seriesSet.has(current)) seriesFilter = '';
+}
+
+function filteredGenerals() {
+  let list = generals;
+  if (currentFolderId !== null) list = list.filter(g => g.folderId === currentFolderId);
+  if (seriesFilter) list = list.filter(g => (g.series || '').trim() === seriesFilter);
+  const q = searchQuery.trim().toLowerCase();
+  if (q) {
+    list = list.filter(g =>
+      (g.name || '').toLowerCase().includes(q) ||
+      (g.skills || '').toLowerCase().includes(q) ||
+      (g.number || '').toLowerCase().includes(q) ||
+      (g.series || '').toLowerCase().includes(q)
+    );
+  }
+  list.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'zh'));
+  return list;
+}
+
+function renderGrid() {
+  const grid = document.getElementById('grid');
+  const empty = document.getElementById('emptyState');
+  const list = filteredGenerals();
+  if (list.length === 0) {
+    grid.style.display = 'none';
+    empty.style.display = 'flex';
+    return;
+  }
+  empty.style.display = 'none';
+  grid.style.display = 'grid';
+  grid.innerHTML = list.map(g => {
+    const cover = getCover(g);
+    const imgHtml = cover
+      ? `<img src="${cover}" alt="${escapeHtml(g.name)}" loading="lazy">`
+      : `<div class="noimg">暂无图片</div>`;
+    const fClass = factionClass(g.faction);
+    return `
+      <div class="card" onclick="openViewGeneral('${g.id}')">
+        <div class="card-img">${imgHtml}</div>
+        <div class="card-body">
+          <div class="card-name">${escapeHtml(g.name)}</div>
+          <div class="card-meta">
+            <span class="faction-badge ${fClass}">${escapeHtml(g.faction || '无')}</span>
+            <span class="card-series">${escapeHtml(g.series || '')}</span>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function onSearch(v) { searchQuery = v; renderGrid(); }
+function onSeriesFilter(v) { seriesFilter = v; renderGrid(); }
+function selectFolder(id) { currentFolderId = id; renderFolderChips(); renderGrid(); }
+
+function openFolderManager() { renderFolderList(); showModal('modalFolder'); }
+function renderFolderList() {
+  const wrap = document.getElementById('folderList');
+  if (folders.length === 0) {
+    wrap.innerHTML = '<div class="hint">暂无文件夹，请先新建</div>';
+    return;
+  }
+  wrap.innerHTML = folders.map(f => `
+    <div class="folder-item">
+      <input value="${escapeHtml(f.name)}" onchange="renameFolder('${f.id}', this.value)">
+      <button class="btn btn-sm" onclick="deleteFolder('${f.id}')">删除</button>
+    </div>`).join('');
+}
+function addFolder() {
+  const input = document.getElementById('newFolderName');
+  const name = input.value.trim();
+  if (!name) { toast('请输入文件夹名称'); return; }
+  folders.push({ id: uid(), name });
+  persistFolders().then(() => { input.value = ''; renderFolderList(); renderFolderChips(); toast('已新建文件夹'); });
+}
+function renameFolder(id, value) {
+  const f = folders.find(x => x.id === id);
+  if (!f) return;
+  const name = value.trim();
+  if (!name) { toast('名称不能为空'); renderFolderList(); return; }
+  f.name = name;
+  persistFolders().then(() => { renderFolderChips(); toast('已重命名'); });
+}
+function deleteFolder(id) {
+  const f = folders.find(x => x.id === id);
+  if (!f) return;
+  confirmDialog(`删除文件夹「${f.name}」？其中的武将将移到未分类。`, async () => {
+    folders = folders.filter(x => x.id !== id);
+    await dbDelete('folders', id);
+    for (const g of generals) {
+      if (g.folderId === id) { g.folderId = null; await dbPut('generals', g); }
+    }
+    if (currentFolderId === id) currentFolderId = null;
+    renderAll();
+    renderFolderList();
+    toast('已删除文件夹');
+  });
+}
+
+function openEditGeneral(id) {
+  if (id == null) {
+    editingDraft = { id: null, name: '', faction: '', number: '', jade: null, series: '', folderId: currentFolderId, coverImage: '', skins: [], createdAt: Date.now(), updatedAt: Date.now() };
+    document.getElementById('editTitle').textContent = '新建武将';
+  } else {
+    const g = generals.find(x => x.id === id);
+    if (!g) return;
+    editingDraft = JSON.parse(JSON.stringify(g));
+    document.getElementById('editTitle').textContent = '编辑武将';
+  }
+  fillEditForm();
+  showModal('modalEdit');
+}
+function fillEditForm() {
+  document.getElementById('fName').value = editingDraft.name || '';
+  document.getElementById('fFaction').value = editingDraft.faction || '';
+  document.getElementById('fNumber').value = editingDraft.number || '';
+  document.getElementById('fJade').value = (editingDraft.jade == null || editingDraft.jade === '') ? '' : editingDraft.jade;
+  document.getElementById('fSeries').value = editingDraft.series || '';
+  const folderSel = document.getElementById('fFolder');
+  folderSel.innerHTML = '<option value="">未分类</option>' +
+    folders.map(f => `<option value="${f.id}" ${editingDraft.folderId === f.id ? 'selected' : ''}>${escapeHtml(f.name)}</option>`).join('');
+  document.getElementById('fSkills').value = editingDraft.skills || '';
+  renderCoverPreview();
+  renderSkinList();
+}
+function previewEditTitle() {
+  const name = document.getElementById('fName').value.trim();
+  document.getElementById('editTitle').textContent = name ? ('编辑：' + name) : (editingDraft.id ? '编辑武将' : '新建武将');
+}
+function closeEditGeneral() { hideModal('modalEdit'); editingDraft = null; }
+
+function renderCoverPreview() {
+  const box = document.getElementById('coverPreview');
+  const btn = document.getElementById('removeCoverBtn');
+  if (editingDraft.coverImage) {
+    box.innerHTML = `<img src="${editingDraft.coverImage}" alt="封面">`;
+    btn.style.display = 'inline-block';
+  } else {
+    box.textContent = '暂无图片';
+    btn.style.display = 'none';
+  }
+}
+function handleCoverUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  processImage(file).then(dataUrl => {
+    editingDraft.coverImage = dataUrl;
+    renderCoverPreview();
+    toast('主图已更新');
+  }).catch(() => toast('图片读取失败'));
+  input.value = '';
+}
+function removeCover() {
+  editingDraft.coverImage = '';
+  renderCoverPreview();
+  toast('已移除主图');
+}
+
+function renderSkinList() {
+  const wrap = document.getElementById('skinList');
+  if (!editingDraft.skins.length) {
+    wrap.innerHTML = '<div class="hint">暂无皮肤，点击上方「＋ 添加皮肤」上传</div>';
+    return;
+  }
+  wrap.innerHTML = editingDraft.skins.map((s) => `
+    <div class="skin-item">
+      <div class="skin-thumb"><img src="${s.image}" alt=""></div>
+      <div class="skin-mid">
+        <input value="${escapeHtml(s.name)}" placeholder="皮肤名称" onchange="renameSkin('${s.id}', this.value)">
+        <div class="skin-btns">
+          <button class="btn btn-sm" onclick="setCoverFromSkin('${s.id}')">设为封面</button>
+          <button class="btn btn-sm" onclick="downloadSkin('${s.id}')">下载</button>
+          <button class="btn btn-sm" onclick="deleteSkin('${s.id}')">删除</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+function addSkinFiles(input) {
+  const files = Array.from(input.files || []);
+  if (!files.length) return;
+  let pending = files.length;
+  files.forEach((file) => {
+    processImage(file).then(dataUrl => {
+      editingDraft.skins.push({ id: uid(), name: '皮肤 ' + (editingDraft.skins.length + 1), image: dataUrl });
+    }).catch(() => toast('有图片读取失败')).finally(() => {
+      pending--;
+      if (pending === 0) { renderSkinList(); toast('已添加 ' + files.length + ' 张皮肤'); }
+    });
+  });
+  input.value = '';
+}
+function setCoverFromSkin(skinId) {
+  const s = editingDraft.skins.find(x => x.id === skinId);
+  if (s) { editingDraft.coverImage = s.image; renderCoverPreview(); toast('已设为封面'); }
+}
+function renameSkin(skinId, value) {
+  const s = editingDraft.skins.find(x => x.id === skinId);
+  if (s) { s.name = value.trim() || '皮肤'; toast('皮肤名已更新'); }
+}
+function deleteSkin(skinId) {
+  confirmDialog('确定删除这张皮肤？', () => {
+    editingDraft.skins = editingDraft.skins.filter(x => x.id !== skinId);
+    renderSkinList();
+    toast('已删除皮肤');
+  });
+}
+function downloadSkin(skinId) {
+  const s = editingDraft.skins.find(x => x.id === skinId);
+  if (!s) return;
+  downloadDataUrl(s.image, `${editingDraft.name || '武将'}_${s.name}.${extFromDataUrl(s.image)}`);
+}
+
+async function saveGeneralForm() {
+  const name = document.getElementById('fName').value.trim();
+  if (!name) { toast('请填写武将名字'); return; }
+  const faction = document.getElementById('fFaction').value.trim();
+  const number = document.getElementById('fNumber').value.trim();
+  const jadeRaw = document.getElementById('fJade').value.trim();
+  const jade = jadeRaw === '' ? null : Math.max(0, Math.min(20, parseInt(jadeRaw) || 0));
+  const series = document.getElementById('fSeries').value.trim();
+  const folderId = document.getElementById('fFolder').value || null;
+  const skills = document.getElementById('fSkills').value;
+
+  editingDraft.name = name;
+  editingDraft.faction = faction;
+  editingDraft.number = number;
+  editingDraft.jade = jade;
+  editingDraft.series = series;
+  editingDraft.folderId = folderId;
+  editingDraft.skills = skills;
+  editingDraft.updatedAt = Date.now();
+
+  if (editingDraft.id == null) {
+    editingDraft.id = uid();
+    editingDraft.createdAt = Date.now();
+    generals.push(editingDraft);
+  } else {
+    const idx = generals.findIndex(x => x.id === editingDraft.id);
+    if (idx >= 0) generals[idx] = editingDraft;
+  }
+  await dbPut('generals', editingDraft);
+  closeEditGeneral();
+  renderAll();
+  toast('已保存');
+}
+
+function openViewGeneral(id) {
+  const g = generals.find(x => x.id === id);
+  if (!g) return;
+  currentViewId = id;
+  buildGallery(g);
+  showModal('modalView');
+}
+function buildGallery(g) {
+  galleryImages = [];
+  if (g.coverImage) galleryImages.push({ name: '主图', image: g.coverImage });
+  (g.skins || []).forEach((s, i) => galleryImages.push({ name: s.name || ('皮肤 ' + (i + 1)), image: s.image }));
+  if (galleryImages.length === 0) galleryImages.push({ name: '', image: '' });
+  galleryIndex = 0;
+  renderView(g);
+}
+function renderView(g) {
+  const body = document.getElementById('viewBody');
+  const cur = galleryImages[galleryIndex] || { name: '', image: '' };
+
+  const mainImg = cur.image
+    ? `<img src="${cur.image}" alt="">`
+    : `<div class="noimg">暂无图片</div>`;
+  const nav = galleryImages.length > 1
+    ? `<button class="gallery-nav prev" onclick="galleryMove(-1)">‹</button>
+       <button class="gallery-nav next" onclick="galleryMove(1)">›</button>`
+    : '';
+  const thumbs = galleryImages.length > 1
+    ? `<div class="thumb-strip">` + galleryImages.map((im, i) =>
+        `<div class="t ${i === galleryIndex ? 'active' : ''}" onclick="galleryGo(${i})">
+           ${im.image ? `<img src="${im.image}" alt="">` : ''}
+         </div>`).join('') + `</div>`
+    : '';
+
+  const skills = (g.skills || '').split('\n').map(s => s.trim()).filter(Boolean);
+
+  body.innerHTML = `
+    <div class="gallery">
+      <div class="gallery-main">${mainImg}${nav}</div>
+      <div class="gallery-caption">${cur.name ? escapeHtml(cur.name) : '　'}（${galleryIndex + 1}/${galleryImages.length}）</div>
+      ${thumbs}
+    </div>
+    <div class="view-name">${escapeHtml(g.name)}</div>
+    <div class="info-grid">
+      <div class="info-item"><div class="k">势力</div><div class="v">${escapeHtml(g.faction || '—')}</div></div>
+      <div class="info-item"><div class="k">武将编号</div><div class="v">${escapeHtml(g.number || '—')}</div></div>
+      <div class="info-item"><div class="k">勾玉</div><div class="v">${(g.jade == null || g.jade === '') ? '—' : (jadeDisplay(g.jade) + ' ' + g.jade)}</div></div>
+      <div class="info-item"><div class="k">系列</div><div class="v">${escapeHtml(g.series || '—')}</div></div>
+    </div>
+    <div class="section-title">技能</div>
+    ${skills.length ? skills.map(sk => {
+      const idx = sk.indexOf('：');
+      const nm = idx > 0 ? sk.slice(0, idx) : sk;
+      const desc = idx > 0 ? sk.slice(idx + 1) : '';
+      return `<div class="skill-block"><div class="sk-name">${escapeHtml(nm)}</div>${desc ? `<div class="sk-desc">${escapeHtml(desc)}</div>` : ''}</div>`;
+    }).join('') : '<div class="hint">暂无技能</div>'}
+  `;
+}
+function galleryMove(d) {
+  galleryIndex = (galleryIndex + d + galleryImages.length) % galleryImages.length;
+  const g = generals.find(x => x.id === currentViewId);
+  if (g) renderView(g);
+}
+function galleryGo(i) {
+  galleryIndex = i;
+  const g = generals.find(x => x.id === currentViewId);
+  if (g) renderView(g);
+}
+function downloadCurrentImage() {
+  const cur = galleryImages[galleryIndex];
+  if (!cur || !cur.image) { toast('没有可下载的图片'); return; }
+  const g = generals.find(x => x.id === currentViewId);
+  const label = cur.name && cur.name !== '主图' ? cur.name : (g && g.name) || '武将';
+  downloadDataUrl(cur.image, `${(g && g.name) || '武将'}_${label}.${extFromDataUrl(cur.image)}`);
+}
+function editFromView() {
+  const id = currentViewId;
+  hideModal('modalView');
+  openEditGeneral(id);
+}
+function closeView() { hideModal('modalView'); currentViewId = null; }
+
+function exportData() {
+  const data = { app: '三国杀百科', version: 2, exportedAt: new Date().toISOString(), folders, generals };
+  const enc = new TextEncoder();
+  const files = [];
+  files.push({ name: 'data.json', data: enc.encode(JSON.stringify(data)) });
+  let idx = 0;
+  for (const g of generals) {
+    const base = sanitizeFilename(g.name);
+    if (g.coverImage) {
+      idx++;
+      files.push({ name: 'images/' + String(idx).padStart(3, '0') + '_' + base + '__主图.' + extFromDataUrl(g.coverImage), data: dataUrlToBytes(g.coverImage) });
+    }
+    (g.skins || []).forEach((s, i) => {
+      idx++;
+      files.push({ name: 'images/' + String(idx).padStart(3, '0') + '_' + base + '__皮肤_' + sanitizeFilename(s.name || ('皮肤' + (i + 1))) + '.' + extFromDataUrl(s.image), data: dataUrlToBytes(s.image) });
+    });
+  }
+  const zip = buildZip(files);
+  const ts = new Date().toISOString().slice(0, 10);
+  const filename = `三国杀百科备份_${ts}.zip`;
+  const blob = new Blob([zip], { type: 'application/zip' });
+  if (zip.length < 20 * 1024 * 1024) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const a = document.createElement('a');
+      a.href = reader.result;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      toast('已导出 ZIP（含武将信息与图片）');
+    };
+    reader.readAsDataURL(blob);
+  } else {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    toast('已导出 ZIP（文件较大，建议用浏览器下载）');
+  }
+}
+function applyImportJson(jsonStr) {
+  let data;
+  try { data = JSON.parse(jsonStr); }
+  catch (err) { toast('导入失败：文件不是有效的 JSON'); return; }
+  const newFolders = Array.isArray(data.folders) ? data.folders : [];
+  const newGenerals = Array.isArray(data.generals) ? data.generals : [];
+  if (!newGenerals.length && !newFolders.length) { toast('文件中没有数据'); return; }
+  confirmDialog(`导入将替换当前全部数据（${newGenerals.length} 个武将、${newFolders.length} 个文件夹），是否继续？`, async () => {
+    await dbClear('folders');
+    await dbClear('generals');
+    folders = newFolders;
+    generals = newGenerals;
+    await persistFolders();
+    await persistGenerals();
+    currentFolderId = null;
+    searchQuery = '';
+    seriesFilter = '';
+    document.getElementById('searchInput').value = '';
+    renderAll();
+    toast('导入成功');
+  });
+}
+function importData(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (/\.zip$/i.test(file.name)) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const files = parseZip(new Uint8Array(e.target.result));
+        const key = Object.keys(files).find(k => /(^|\/)data\.json$/i.test(k));
+        if (!key) { toast('ZIP 中未找到 data.json'); input.value = ''; return; }
+        applyImportJson(new TextDecoder().decode(files[key]));
+      } catch (err) { toast('导入失败：' + err.message); }
+      input.value = '';
+    };
+    reader.readAsArrayBuffer(file);
+  } else {
+    const reader = new FileReader();
+    reader.onload = (e) => { applyImportJson(e.target.result); input.value = ''; };
+    reader.readAsText(file);
+  }
+}
+
+async function init() {
+  try {
+    db = await openDB();
+    await loadData();
+    renderAll();
+  } catch (e) {
+    document.getElementById('grid').innerHTML = '<div class="hint">初始化失败，请确认浏览器支持 IndexedDB。</div>';
+  }
+}
+init();
+</script>
+</body>
+</html>
